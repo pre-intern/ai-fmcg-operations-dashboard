@@ -1,0 +1,176 @@
+<script>
+  google.charts.load('current', {'packages':['corechart','bar','line']});
+  google.charts.setOnLoadCallback(loadAllData);
+
+  function openTab(evt, tabName) {
+    document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
+    document.getElementById(tabName).classList.add('active');
+    evt.currentTarget.classList.add('active');
+    // Redraw visible charts
+    if (tabName === 'logistics') drawLogistics();
+    else if (tabName === 'accuracy') drawAccuracy();
+    else if (tabName === 'finance') drawFinance();
+    else if (tabName === 'genz') drawGenZ();
+  }
+
+  // Toàn cục lưu data để dùng khi chuyển tab
+  var inventoryData, logisticsData, accuracyData, financeData, genzData;
+
+  function loadAllData() {
+    google.script.run.withSuccessHandler(function(data) {
+      if (!data) return;
+      inventoryData = data.inventory;
+      logisticsData = data.logistics;
+      accuracyData = data.accuracy;
+      financeData = data.finance;
+      genzData = data.genz;
+
+      populateInventory(inventoryData);
+      populateLogistics(logisticsData);
+      populateAccuracy(accuracyData);
+      populateFinance(financeData);
+      populateGenZ(genzData);
+    }).getAllDashboardData();
+  }
+
+  // ============= INVENTORY =============
+  function populateInventory(data) {
+    if (!data) return;
+    document.getElementById('totalValue').innerText = data.totalValue.toLocaleString('vi-VN') + ' ₫';
+    document.getElementById('totalSKU').innerText = data.totalSKU;
+    document.getElementById('lowStockCount').innerText = data.lowStockCount;
+
+    var catData = [['Danh mục', 'Giá trị tồn']];
+    for (var cat in data.categoryValues) {
+      catData.push([cat, data.categoryValues[cat]]);
+    }
+    var catTable = google.visualization.arrayToDataTable(catData);
+    new google.visualization.ColumnChart(document.getElementById('categoryChart')).draw(catTable, { title: 'Giá trị tồn kho theo danh mục', legend: 'none', colors: ['#3498db'] });
+
+    var abcData = google.visualization.arrayToDataTable([
+      ['Loại', 'Số SKU'],
+      ['A (70% giá trị)', data.abc.a],
+      ['B (20% giá trị)', data.abc.b],
+      ['C (10% giá trị)', data.abc.c]
+    ]);
+    new google.visualization.PieChart(document.getElementById('abcChart')).draw(abcData, { title: 'Phân loại ABC', colors: ['#e74c3c','#f39c12','#2ecc71'] });
+
+    renderTable('topHighestTable', ['SKU','Tên hàng','Giá trị','Tồn'], data.top10Highest.map(function(r){ return [r.sku, r.name, r.value, r.stock]; }));
+    renderTable('topLowestTable', ['SKU','Tên hàng','Giá trị','Tồn'], data.top10Lowest.map(function(r){ return [r.sku, r.name, r.value, r.stock]; }));
+  }
+
+  // ============= LOGISTICS =============
+  function populateLogistics(data) {
+    if (!data) return;
+    logisticsData = data;
+    drawLogistics();
+  }
+  function drawLogistics() {
+    if (!logisticsData) return;
+    var months = Object.keys(logisticsData.inboundByMonth).concat(Object.keys(logisticsData.outboundByMonth)).filter(function(v,i,a){ return a.indexOf(v)===i; }).sort();
+    var comboData = [['Tháng', 'Nhập kho', 'Xuất kho']];
+    months.forEach(function(m){ comboData.push([m, logisticsData.inboundByMonth[m]||0, logisticsData.outboundByMonth[m]||0]); });
+    new google.visualization.ColumnChart(document.getElementById('inboundOutboundChart')).draw(google.visualization.arrayToDataTable(comboData), { title: 'Số lượng Nhập/Xuất theo tháng', colors: ['#3498db','#2ecc71'] });
+
+    var chData = [['Kênh', 'Doanh số']];
+    for (var ch in logisticsData.channelSales) chData.push([ch, logisticsData.channelSales[ch]]);
+    new google.visualization.PieChart(document.getElementById('channelPieChart')).draw(google.visualization.arrayToDataTable(chData), { title: 'Doanh số theo kênh bán', pieHole: 0.4 });
+
+    renderTable('supplierTable', ['Nhà cung cấp','Giá trị nhập'], logisticsData.topSuppliers.map(function(r){ return [r.name, r.value.toLocaleString()]; }));
+    renderTable('customerTable', ['Khách hàng','Doanh số'], logisticsData.topCustomers.map(function(r){ return [r.name, r.value.toLocaleString()]; }));
+  }
+
+  // ============= ACCURACY =============
+  function populateAccuracy(data) {
+    if (!data) return;
+    accuracyData = data;
+    drawAccuracy();
+  }
+  function drawAccuracy() {
+    if (!accuracyData) return;
+    document.getElementById('discrepancyRate').innerText = accuracyData.discrepancyRate + '%';
+    var months = Object.keys(accuracyData.monthlyChecks).sort();
+    var barData = [['Tháng', 'Tổng phiếu', 'Có chênh lệch']];
+    months.forEach(function(m){ barData.push([m, accuracyData.monthlyChecks[m].total, accuracyData.monthlyChecks[m].withDiff]); });
+    new google.visualization.ColumnChart(document.getElementById('monthlyCheckChart')).draw(google.visualization.arrayToDataTable(barData), { title: 'Phiếu kiểm kê hàng tháng', colors: ['#95a5a6','#e74c3c'] });
+
+    var reasonData = [['Lý do', 'Số lượng']];
+    for (var r in accuracyData.reasonCount) reasonData.push([r, accuracyData.reasonCount[r]]);
+    new google.visualization.PieChart(document.getElementById('reasonPieChart')).draw(google.visualization.arrayToDataTable(reasonData), { title: 'Nguyên nhân điều chỉnh' });
+  }
+
+  // ============= FINANCE =============
+  function populateFinance(data) {
+    if (!data) return;
+    financeData = data;
+    drawFinance();
+  }
+  function drawFinance() {
+    if (!financeData) return;
+    document.getElementById('totalRevenue').innerText = financeData.totalRevenue.toLocaleString('vi-VN') + ' ₫';
+    document.getElementById('totalCOGS').innerText = financeData.totalCOGS.toLocaleString('vi-VN') + ' ₫';
+    document.getElementById('grossProfit').innerText = financeData.grossProfit.toLocaleString('vi-VN') + ' ₫';
+    document.getElementById('grossMargin').innerText = financeData.grossMargin + '%';
+    document.getElementById('inventoryTurnover').innerText = financeData.inventoryTurnover;
+    document.getElementById('daysInventory').innerText = financeData.daysInventory;
+  }
+
+  // ============= GEN Z =============
+  function populateGenZ(data) {
+    if (!data) return;
+    genzData = data;
+    drawGenZ();
+  }
+  function drawGenZ() {
+    if (!genzData) return;
+    var lineData = [['Tháng', 'Tỷ trọng Online (%)']];
+    genzData.onlineShare.forEach(function(r){ lineData.push([r.month, parseFloat(r.share)]); });
+    new google.visualization.LineChart(document.getElementById('onlineShareChart')).draw(google.visualization.arrayToDataTable(lineData), { title: 'Tỷ trọng doanh số Online theo tháng', legend: 'none', colors: ['#9b59b6'] });
+
+    var promoData = [['Kênh', 'Tỷ lệ khuyến mãi (%)']];
+    for (var ch in genzData.promoRate) promoData.push([ch, parseFloat(genzData.promoRate[ch].rate)]);
+    new google.visualization.ColumnChart(document.getElementById('promoRateChart')).draw(google.visualization.arrayToDataTable(promoData), { title: 'Tỷ lệ đơn hàng có khuyến mãi theo kênh', colors: ['#e67e22'] });
+
+    renderTable('topOnlineTable', ['Sản phẩm','Số lượng bán Online'], genzData.topOnline.map(function(r){ return [r.name, r.qty]; }));
+  }
+
+  // ============= UTILS =============
+  function renderTable(tableId, headers, rows) {
+    var table = document.getElementById(tableId);
+    if (!table) return;
+    var html = '<tr>' + headers.map(function(h){ return '<th>'+h+'</th>'; }).join('') + '</tr>';
+    rows.forEach(function(row) {
+      html += '<tr>' + row.map(function(c){ return '<td>'+c+'</td>'; }).join('') + '</tr>';
+    });
+    table.innerHTML = html;
+  }
+
+  // Auto refresh mỗi 60 giây
+  var autoRefreshInterval;
+  function startAutoRefresh() {
+    if (autoRefreshInterval) clearInterval(autoRefreshInterval);
+    autoRefreshInterval = setInterval(function() {
+      google.script.run
+        .withSuccessHandler(function(data) {
+          if (!data) return;
+          inventoryData = data.inventory;
+          logisticsData = data.logistics;
+          accuracyData = data.accuracy;
+          financeData = data.finance;
+          genzData = data.genz;
+          populateInventory(inventoryData);
+          // vẽ lại tab hiện tại nếu cần
+          var activeTab = document.querySelector('.tab-content.active');
+          if (activeTab) {
+            if (activeTab.id === 'logistics') drawLogistics();
+            else if (activeTab.id === 'accuracy') drawAccuracy();
+            else if (activeTab.id === 'finance') drawFinance();
+            else if (activeTab.id === 'genz') drawGenZ();
+          }
+        })
+        .getAllDashboardData();
+    }, 60000);
+  }
+  window.addEventListener('load', startAutoRefresh);
+</script>
