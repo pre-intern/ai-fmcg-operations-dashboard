@@ -1,6 +1,5 @@
-# ai-fmcg-operations-dashboard
-AI-assisted FMCG operations analytics dashboard using Google Sheets, Apps Script, and HTML reporting workflows.
-# AI-Assisted FMCG Operations Dashboard
+ FMCG operations analytics dashboard using Google Sheets, Apps Script, and HTML reporting workflows.
+# FMCG Operations Dashboard
 
 An operational analytics dashboard prototype designed to improve inventory visibility, logistics monitoring, and e-commerce reporting workflows in FMCG environments.
 
