@@ -105,7 +105,7 @@ This project was developed as an independent exploration of:
 
 # Screenshots
 
-(Add dashboard screenshots here)
+in folder assets
 
 ---
 
