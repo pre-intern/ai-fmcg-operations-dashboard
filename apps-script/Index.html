@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <meta charset="UTF-8">
+  <title>FMCG Warehouse Dashboard</title>
+  <?!= include('Styles'); ?>
+  <script src="https://www.gstatic.com/charts/loader.js"></script>
+</head>
+<body>
+  <div class="dashboard">
+    <header>
+      <h1>📦 FMCG Warehouse Command Center</h1>
+      <p>Dữ liệu được cập nhật trực tiếp từ Google Sheets</p>
+    </header>
+
+    <nav class="tabs">
+      <button class="tab active" onclick="openTab(event, 'inventory')">📋 Tổng quan tồn kho</button>
+      <button class="tab" onclick="openTab(event, 'logistics')">🚚 Nhập - Xuất</button>
+      <button class="tab" onclick="openTab(event, 'accuracy')">🔍 Kiểm soát tồn kho</button>
+      <button class="tab" onclick="openTab(event, 'finance')">💰 Tài chính</button>
+      <button class="tab" onclick="openTab(event, 'genz')">🛒 Gen Z Insights</button>
+    </nav>
+
+    <!-- Tab Inventory -->
+    <div id="inventory" class="tab-content active">
+      <div class="kpi-row">
+        <div class="kpi-card"><div class="kpi-value" id="totalValue">...</div><div class="kpi-label">Tổng giá trị tồn kho</div></div>
+        <div class="kpi-card"><div class="kpi-value" id="totalSKU">...</div><div class="kpi-label">Tổng số SKU</div></div>
+        <div class="kpi-card warning"><div class="kpi-value" id="lowStockCount">...</div><div class="kpi-label">SKU dưới mức tối thiểu</div></div>
+      </div>
+      <div class="chart-row">
+        <div class="chart-container" id="categoryChart"></div>
+        <div class="chart-container" id="abcChart"></div>
+      </div>
+      <div class="table-row">
+        <div class="table-container"><h3>Top 10 tồn kho cao nhất</h3><table id="topHighestTable"></table></div>
+        <div class="table-container"><h3>Top 10 tồn kho thấp nhất</h3><table id="topLowestTable"></table></div>
+      </div>
+    </div>
+
+    <!-- Tab Logistics -->
+    <div id="logistics" class="tab-content">
+      <div class="chart-row">
+        <div class="chart-container" id="inboundOutboundChart"></div>
+        <div class="chart-container" id="channelPieChart"></div>
+      </div>
+      <div class="table-row">
+        <div class="table-container"><h3>Top Nhà cung cấp</h3><table id="supplierTable"></table></div>
+        <div class="table-container"><h3>Top Khách hàng</h3><table id="customerTable"></table></div>
+      </div>
+    </div>
+
+    <!-- Tab Accuracy -->
+    <div id="accuracy" class="tab-content">
+      <div class="kpi-row">
+        <div class="kpi-card"><div class="kpi-value" id="discrepancyRate">...</div><div class="kpi-label">Tỷ lệ chênh lệch kiểm kê</div></div>
+      </div>
+      <div class="chart-row">
+        <div class="chart-container" id="monthlyCheckChart"></div>
+        <div class="chart-container" id="reasonPieChart"></div>
+      </div>
+    </div>
+
+    <!-- Tab Finance -->
+    <div id="finance" class="tab-content">
+      <div class="kpi-row">
+        <div class="kpi-card"><div class="kpi-value" id="totalRevenue">...</div><div class="kpi-label">Doanh thu xuất kho</div></div>
+        <div class="kpi-card"><div class="kpi-value" id="totalCOGS">...</div><div class="kpi-label">Giá vốn hàng bán</div></div>
+        <div class="kpi-card"><div class="kpi-value" id="grossProfit">...</div><div class="kpi-label">Lợi nhuận gộp</div></div>
+        <div class="kpi-card"><div class="kpi-value" id="grossMargin">...</div><div class="kpi-label">Biên lợi nhuận gộp</div></div>
+        <div class="kpi-card"><div class="kpi-value" id="inventoryTurnover">...</div><div class="kpi-label">Vòng quay tồn kho</div></div>
+        <div class="kpi-card"><div class="kpi-value" id="daysInventory">...</div><div class="kpi-label">Ngày tồn kho</div></div>
+      </div>
+    </div>
+
+    <!-- Tab Gen Z -->
+    <div id="genz" class="tab-content">
+      <div class="chart-row">
+        <div class="chart-container" id="onlineShareChart"></div>
+        <div class="chart-container" id="promoRateChart"></div>
+      </div>
+      <div class="table-container"><h3>Top sản phẩm bán Online</h3><table id="topOnlineTable"></table></div>
+    </div>
+  </div>
+
+  <?!= include('JavaScript'); ?>
+</body>
+</html>
